@@ -3,26 +3,26 @@ import os.path
 import subprocess as sub
 
 
-# Get file type based on extension. Only .p12 and .jks are supported
-def file_type(filename):
-    if filename.endswith('.p12'):
+def get_file_type(file_name):
+    """ Get file type by filename extension. Can be 'PKCS12' or 'JKS' """
+    if file_name.endswith('.p12'):
         return 'PKCS12'
-    elif filename.endswith('.jks'):
+    elif file_name.endswith('.jks'):
         return 'JKS'
     else:
         return 'JKS'
 
 
-# Get file name without extension
-def filename_without_extension(file_name):
-    if file_type(file_name) in ['PKCS12', 'JKS']:
+def get_filename_without_extension(file_name):
+    """ Get the name without extension """
+    if get_file_type(file_name) in ['PKCS12', 'JKS']:
         return file_name[:len(file_name)-4]
     else:
         return file_name
 
 
-# Command (function) to run in interactive or non-interactive mode
 def run_command(command_function, is_interactive):
+    """ Command as function() to run in interactive or non-interactive mode """
     if is_interactive is None:
         return command_function()
     else:
@@ -35,8 +35,8 @@ def run_command(command_function, is_interactive):
             print 'Please enter \'y\' or \'n\''
 
 
-# Run system command to convert a keystore to PKCS12
 def run_convert_to_pkcs12(args):
+    """ Run system command to convert a keystore to PKCS12 """
     command = ['keytool',
                '-importkeystore',
                '-srckeystore',
@@ -44,7 +44,7 @@ def run_convert_to_pkcs12(args):
                '-srcstoretype',
                args.inform
                if args.inform is not None
-               else file_type(args.in_),
+               else get_file_type(args.in_),
                '-destkeystore',
                _base_name + '.p12',
                '-deststoretype',
@@ -59,8 +59,8 @@ def run_convert_to_pkcs12(args):
     run_command(command_function, args.interactive)
 
 
-# Run system command to convert a keystore to JKS
 def run_convert_to_jks(args):
+    """ Run system command to convert a keystore to JKS """
     command = ['keytool',
                '-importkeystore',
                '-srckeystore',
@@ -68,7 +68,7 @@ def run_convert_to_jks(args):
                '-srcstoretype',
                args.inform
                if args.inform is not None
-               else file_type(args.in_),
+               else get_file_type(args.in_),
                '-destkeystore',
                _base_name + '.jks',
                '-deststoretype',
@@ -82,8 +82,8 @@ def run_convert_to_jks(args):
     run_command(command_function, args.interactive)
 
 
-# Run system command to extract private keys from PKCS12 keystore
 def run_extract_private_key(args):
+    """ Run system command to extract private keys from PKCS12 keystore """
     command = ['openssl',
                'pkcs12',
                '-in',
@@ -100,8 +100,8 @@ def run_extract_private_key(args):
     run_command(command_function, args.interactive)
 
 
-# Run system command to convert private key to non-encrypted key
 def run_convert_private_key_into_nonencrypted(args):
+    """ Run system command to convert private key to non-encrypted key """
     if not os.path.isfile(_base_name + '.key'):
         run_extract_private_key(args)
     command = ['openssl',
@@ -119,8 +119,8 @@ def run_convert_private_key_into_nonencrypted(args):
     run_command(command_function, args.interactive)
 
 
-# Run system command to extract certificate chain from PKCS12 keystore
 def run_extract_certificate_chain(args):
+    """ Run system command to extract certificate chain from PKCS12 keystore """
     command = ['openssl',
                'pkcs12',
                '-in',
@@ -137,8 +137,8 @@ def run_extract_certificate_chain(args):
     run_command(command_function, args.interactive)
 
 
-# Run system command to converts PEM certificates to DER
 def run_convert_certs_to_der(args):
+    """ Run system command to converts PEM certificates to DER """
     if certs_count == 0:
         run_split_certificate_chain(args)
     for x in range(0, certs_count):
@@ -161,8 +161,8 @@ def run_convert_certs_to_der(args):
         run_command(command_function, args.interactive)
 
 
-# Returns system command as string to extract certificates from PEM encoded certificate chain
 def run_split_certificate_chain(args):
+    """ Returns system command as string to extract certificates from PEM encoded certificate chain """
     def command_function():
         if not os.path.isfile(_base_name + '.chain.pem'):
             run_extract_certificate_chain(args)
@@ -229,7 +229,7 @@ parser.add_argument('-noder',
 args = parser.parse_args()
 print args
 
-_base_name = filename_without_extension(args.in_)
+_base_name = get_filename_without_extension(args.in_)
 if args.command == 'jks':
     run_convert_to_pkcs12(args)
 if args.command == 'pkcs12':
